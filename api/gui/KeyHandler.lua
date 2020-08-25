@@ -1,5 +1,6 @@
 local Log = require("api.Log")
 local IKeyInput = require("api.gui.IKeyInput")
+local KeybindTranslator = require("api.gui.KeybindTranslator")
 local Queue = require("api.Queue")
 
 local input = require("internal.input")
@@ -38,6 +39,7 @@ function KeyHandler:init(no_repeat_delay, capture_released)
    self.stop_halt = true
    self.frames_held = 0
    self.keybinds_held = {}
+   self.keybinds = KeybindTranslator:new()
    self.macro_queue = Queue:new()
 
    self.no_repeat_delay = no_repeat_delay
@@ -81,6 +83,7 @@ function KeyHandler:focus()
    input.set_key_repeat(true)
    input.set_text_input(false)
    input.set_key_handler(self)
+   self.keybinds:set_dirty()
 end
 
 function KeyHandler:bind_keys(bindings)
@@ -91,12 +94,16 @@ function KeyHandler:bind_keys(bindings)
 
       self.bindings[k] = v
    end
+
+   self.keybinds:enable(bindings)
 end
 
 function KeyHandler:unbind_keys(bindings)
    for _, k in ipairs(bindings) do
       self.bindings[k] = nil
    end
+
+   self.keybinds:disable(bindings)
 end
 
 function KeyHandler:halt_input()
@@ -112,7 +119,7 @@ end
 
 -- Special key repeat for keys bound to a movement action.
 function KeyHandler:is_repeating_key(key)
-   return false
+   return REPEATS[self.keybinds:key_to_keybind(key, {}) or ""]
 end
 
 function KeyHandler:prepend_key_modifiers(key)
@@ -139,6 +146,7 @@ function KeyHandler:is_modifier_held(modifier)
 end
 
 function KeyHandler:ignore_modifiers(modifiers)
+   self.keybinds:ignore_modifiers(modifiers)
 end
 
 function KeyHandler:run_key_action(key, ...)
@@ -162,10 +170,20 @@ function KeyHandler:run_key_action(key, ...)
       it.pressed = false
    end
 
-   self.keybinds_held[key] = self.keybinds_held[key] or {}
-   table.insert(self.keybinds_held[key], key)
+   local keybind = self.keybinds:key_to_keybind(key, self.modifiers)
+   if Log.has_level("trace") then
+      Log.trace("Keybind: %s %s -> \"%s\" %s", key, inspect(self.modifiers), keybind, self)
+   end
 
-   local ran, result = self:run_keybind_action(key, true, ...)
+   if self.bindings[keybind] == nil then
+      local with_modifiers = self:prepend_key_modifiers(key)
+      keybind = "raw_" .. with_modifiers
+   end
+
+   self.keybinds_held[key] = self.keybinds_held[key] or {}
+   table.insert(self.keybinds_held[key], keybind)
+
+   local ran, result = self:run_keybind_action(keybind, true, ...)
 
    if not ran then
       for _, forward in ipairs(self.forwards) do

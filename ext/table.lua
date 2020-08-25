@@ -275,16 +275,62 @@ function table.remove_by(arr, f)
    return table.remove_indices(arr, inds)
 end
 
-local function right_pad(str, len)
-   return str .. string.rep(' ', len - #str)
-end
+--- Removes a value from a list-like table.
+---
+--- @tparam table tbl
+--- @tparam any value
+--- @treturn[opt] any the removed value
+function table.iremove_value(tbl, value)
+   local result
 
-local function ireduce(arr, f, start)
-   local result = start
-
-   for _, v in ipairs(arr) do
-      result = f(result, v)
+   local ind
+   for i, v in ipairs(tbl) do
+      if v == value then
+         ind = i
+         break
+      end
+   end
+   if ind then
+      result = table.remove(tbl, ind)
    end
 
    return result
 end
+
+function table.iremove_by(arr, pred)
+   local inds = {}
+   for i, v in ipairs(arr) do
+      if pred(v) then
+         inds[#inds+1] = i
+      end
+   end
+
+   local offset = 0
+   for _, ind in ipairs(inds) do
+      table.remove(arr, ind-offset)
+      offset = offset + 1
+   end
+
+   return inds
+end
+
+--- Flattens an list-like table one layer down.
+-- @tparam list arr
+-- @treturn list
+function table.flatten(arr)
+   local result = {}
+
+   local function flatten(arr)
+      for _, v in ipairs(arr) do
+         table.insert(result, v)
+      end
+   end
+
+   for _, v in ipairs(arr) do
+      flatten(v)
+   end
+
+   return result
+end
+
+table.unpack = unpack

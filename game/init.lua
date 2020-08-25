@@ -1,15 +1,25 @@
 local draw = require("internal.draw")
 local TestLayer = require("sketch.TestLayer")
+local root = require("game.root")
+local Repl = require("api.Repl")
 
 local game = {}
 
 local function cb(dt)
    local layer = TestLayer:new()
 
-   layer:query()
+   root:set_layer(layer)
+
+   root:query()
+end
+
+local function startup()
+   rawset(_G, "pause", function(...) return Repl.pause(...) end)
 end
 
 function game.update(dt)
+   startup()
+
    local going = true
    while going do
       local success, action = xpcall(cb, debug.traceback)

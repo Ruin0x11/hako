@@ -62,7 +62,6 @@ local SANDBOX_GLOBALS = {
    -- misc. globals
    "inspect",
    "fun",
-   "help",
    "pause",
 }
 
@@ -274,17 +273,13 @@ end
 
 
 local function get_load_type(path)
-   if string.match(path, "^api%.") or string.match(path, "^thirdparty%.") then
-      return "api"
-   elseif path_is_in_mod(path) then
-      return "mod"
-   elseif LOVE2D_REQUIRES[path] then
+   if LOVE2D_REQUIRES[path] then
       return "thirdparty"
    elseif NATIVE_REQUIRES[path] or package.searchpath(path, package.cpath) then
       return "native"
    end
 
-   return nil
+   return "api"
 end
 
 local function can_hotload(path)
@@ -335,13 +330,7 @@ local function safe_load_chunk(path)
    return nil
 end
 
---- Requires a path with either the mod environment or the global
---- environment depending on its prefix.
 local function env_dofile_or_safe_load(path)
-   if path_is_in_mod(path) then
-      return safe_load_chunk(path)
-   end
-
    return env_dofile(path)
 end
 
@@ -620,12 +609,8 @@ function env.generate_sandbox(mod_name, is_strict)
 
    sandbox["require"] = mod_require
    sandbox["dofile"] = function(path) return env.load_sandboxed_chunk(path, mod_name) end
-   sandbox["data"] = require("internal.data")
    sandbox["config"] = require("internal.config")
-   sandbox["schema"] = require("thirdparty.schema")
    sandbox["_G"] = sandbox
-
-   sandbox["save"] = require("internal.global.save")
 
    sandbox["debug"] = { traceback = debug.traceback }
 
