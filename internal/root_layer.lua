@@ -3,6 +3,7 @@ local IUiLayer = require("api.gui.IUiLayer")
 local IInput = require("api.gui.IInput")
 local KeyHandler = require("api.gui.KeyHandler")
 local Log = require("api.Log")
+local SaveFs = require("api.SaveFs")
 
 local draw = require("internal.draw")
 

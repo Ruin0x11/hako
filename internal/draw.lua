@@ -62,8 +62,8 @@ function draw.init()
    cur_width = love.graphics.getWidth()
    cur_height = love.graphics.getHeight()
 
-   love.graphics.setLineStyle("rough")
-   love.graphics.setDefaultFilter("nearest", "nearest", 1)
+   love.graphics.setLineStyle("smooth")
+   love.graphics.setDefaultFilter("linear", "linear", 1)
    love.graphics.setBlendMode("alpha")
 end
 

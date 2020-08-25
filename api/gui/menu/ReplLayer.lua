@@ -21,6 +21,7 @@ function ReplLayer:init(env, params)
    params = params or {}
 
    self.history = params.history or {}
+   self.history_file = params.history_file or {}
    self.color = params.color or {17, 17, 65, 192}
    self.message = params.message or nil
 
@@ -567,6 +568,7 @@ end
 function ReplLayer:save_history()
    if self.history_file then
       SaveFs.write(self.history_file, self.history)
+      SaveFs.save_game("main")
    end
 end
 

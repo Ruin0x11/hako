@@ -154,24 +154,10 @@ local NATIVE_REQUIRES = table.set {
 
 local global_require = require
 
-local function can_load_native_libs(mod_env)
-   local setting = config["base.enable_native_libs"]
-   if setting == "base" then
-      return not not mod_env
-   elseif setting then
-      return true
-   end
-
-   return false
-end
-
 local function get_require_path(path, mod_env)
    local resolved = package.searchpath(path, package.path)
 
-   if resolved == nil and can_load_native_libs(mod_env) then
-      -- Also try cpath, but only when not using the love runtime
-      -- (tests). Mods shouldn't be able to load arbitrary native
-      -- libraries.
+   if resolved == nil then
       Log.debug("Searching cpath for lib '%s'", path)
 
       resolved = package.searchpath(path, package.cpath)
@@ -183,7 +169,7 @@ local function get_require_path(path, mod_env)
          return path, true
       end
 
-      if not mod_env and path == "ffi" then
+      if path == "ffi" then
          return path, true
       end
    end
@@ -222,9 +208,7 @@ local function env_dofile(path, mod_env)
          end
       end
       split_path(package.path)
-      if can_load_native_libs(mod_env) then
-          split_path(package.cpath)
-      end
+      split_path(package.cpath)
       return nil, ("Cannot find path '%s'. Tried searching the following: %s"):format(path, tried_paths)
    end
 
@@ -253,7 +237,7 @@ local function env_dofile(path, mod_env)
    mod_env = mod_env or _G
    setfenv(chunk, mod_env)
 
-   local success, err = xpcall(chunk, debug.traceback)
+   local success, err = xpcall(chunk, debug.traceback, path)
    if not success then
       return nil, err
    end

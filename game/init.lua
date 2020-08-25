@@ -2,10 +2,13 @@ local draw = require("internal.draw")
 local TestLayer = require("sketch.TestLayer")
 local root = require("game.root")
 local Repl = require("api.Repl")
+local SaveFs = require("api.SaveFs")
 
 local game = {}
 
 local function cb(dt)
+   SaveFs.load_game("main")
+
    local layer = TestLayer:new()
 
    root:set_layer(layer)
